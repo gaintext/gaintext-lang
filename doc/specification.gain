@@ -1,0 +1,480 @@
+base: http://gaintext.org/doc/gaintext-lang/specification.gain
+vocab: TBD
+title: GainText specification
+author: Martin Waitz <tali@admingilde.org>
+
+
+
+chapter: GainText specification
+===============================
+
+
+Document structure
+~~~~~~~~~~~~~~~~
+
+Paragraphs
+----------
+
+Normal text can be written without paying attention to line breaks.
+Consecutive lines are joined into one paragraph.
+One or several blank lines can be used to separate paragraphs.
+It is recommended to add a line break at the end of each sentence,
+as that makes it easier to edit the document without having
+to reformat too many lines.
+
+
+Named elements
+--------------
+
+Elements add structure to the document.
+They are used to describe what is being written.
+
+example:
+  `````
+  section: title of the section
+  `````
+  This defines a new section of the document, with the given title.
+
+The name of an element may consists of several words.
+However, the name is not free but has to be defined by the used template.
+The first word of the name selects if and which additional information can be used within the element name.
+
+example:
+  `````
+  abbreviation CPU: Central Processing Unit.
+  abbreviation OS: Operating System.
+  `````
+
+Common first words of an element name may be written on one line, with the rest indented on the following lines.
+
+example:
+  `````
+  abbreviation
+    CPU: Central Processing Unit.
+    OS: Operating System.
+  `````
+
+Only previously defined element names (e.g. by a template) are recognized.
+All other names simply represent normal text.
+
+Elements are only recognized when they start a new block.
+
+example:
+  `````
+  location: Berlin
+  location: New York
+  `````
+
+  This defines two elements (given a definition for element name "location"), while the following is parsed as one text paragraph:
+
+  `````
+  We meet in the following
+  location: central station, Nuremberg.
+  `````
+
+If normal text would be misinterpreted as an element, it can be escaped by enclosing it in `~`.
+
+example:
+  `````
+  ~location:~ is rendered as normal text.
+  `````
+
+As a convention, GainText element names start with a lowercase character and are therefor less likely
+to conflict with the start of a text paragraph.
+
+
+Attributes
+----------
+
+Elements may contain attributes:
+
+example:
+  `````
+  section: title of the section #id .class attr=value
+  `````
+
+  `````
+  section: title of the section {#id .class attr=value}
+  `````
+
+  `````
+  section: "title of the section" #id .class attr=value
+  `````
+
+# This does not work, because it has a `#` at the beginning of the line:
+# `````
+# section: title of the section
+#   #id .class attr=value
+# `````
+
+  this is an abbreviation for:
+
+  `````
+  section: title of the section
+    id: id
+    class: class
+    key: value
+  `````
+
+
+TBD:
+  Some attributes are added implicitly.
+  Having an ID for every section of the document would be important, for example.
+  But adding this to every element might be overkill and generating a good ID for all elements might not be easy.
+  Maybe whis would simply be solved by offloading this to the element definition (implementing a genID function for sections)?
+
+  Maybe don't explain attributes here at all and concentrate on the semantic structure.
+  Element definitions could then generate attributes automatically, based on RDF properties.
+
+  The *title* has to be handled by the element definition, too.
+  Simple elments may use it as the element content, while section-like elements will put it into its own `<title>` tag.
+
+  Move down!
+
+
+Indentation
+-----------
+
+Elements can also contain content.
+Everything which is indented further than the element is considered to be content of the element.
+
+example:
+  `````
+  example:
+    This is an example.
+
+    This is the second paragraph of the example.
+  `````
+
+The text after the element definition usually contains some title or identifier
+while the indented lines afterwards define the actual contents.
+
+example:
+  `````
+  section: This is the title of the section
+    This is a paragraph within the section.
+
+    And another.
+  `````
+
+Indentation can be used to define a hierarchical structure.
+The indented content of an element can contain new elements.
+Those also belong to the content of the parent element.
+They may be used to further describe that element or to
+restrict the scope of the inner element.
+
+example:
+  `````
+  requirement: #req-id
+    The example shall be understandable.
+
+    rationale:
+      Otherwise it is futile.
+
+  test: #test-id
+    Ask a new user if he understands the example.
+
+    verifies: [#req-id]
+  `````
+  TBD: Syntax for links?
+
+
+example:
+  `````
+  TBD hierarchical structure
+  `````
+
+  `````
+  TBD scoped elements
+  `````
+
+Indentation can also be used to introduce elements without any introduction line.
+When text is indented at least four spaces or one tab, then it is considered
+to be a verbatim (code) block.
+
+example:
+  `````
+  Normal Text within one paragraph.
+
+      Text which is indented at least four spaces or one tab
+      will be rendered as a code block.
+  `````
+
+TBD: make type of created indent element configurable?
+TBD: is default-to-code enough when we can map elements in a context-sensitive way?
+
+A line which is indented one to three spaces starts a new paragraph.
+
+example:
+  `````
+  Normal Text within one paragraph.
+    Text which is indented one to three spaces against the base indent
+  will start a new block (paragraph or element context).
+   * list item in a new block
+   * second list item in the same new block
+  `````
+
+
+
+Structure from headers
+----------------------
+
+Tree structure can also be specified by providing headers on different levels.
+
+example:
+  ``````
+  element: level 1
+  ================
+
+  content on level 1
+
+  element: level 2
+  ----------------
+
+  content on level 1
+  ``````
+
+When defining sections, the "section:" part can also be omitted.
+
+example:
+  ``````
+  section: new section
+  --------------------
+
+  text paragraph.
+  ``````
+
+  is parsed the same as:
+
+  ``````
+  new section
+  -----------
+
+  text paragraph.
+  ``````
+
+Each indentation level has it's own set of header markers.
+
+example:
+  `````
+  section: level1
+  +++++++++++++++
+
+  section: level2
+
+    section: level3
+    ----------------
+
+    section: level4
+    +++++++++++++++
+
+  # Q: do we actually allow to mix both header styles within one level?
+  # A: Yes we do, because we want to support other indented elements here, too.
+  section: level2
+  ---------------
+  `````
+
+
+Shortcuts
+---------
+
+Some commonly used element have shortcuts so that they can be created easier.
+
+Lists can be introduced with the characters `*`, `+`, and `-`:
+
+example:
+  `````
+  TODO:
+   * first item
+   * and another
+     - subitem 1
+     - subitem 2
+   * last item
+  `````
+  Multiple levels can be created by indentation.
+  If the list immediately follows a line of normal text,
+  than it has to be indented by one to three spaces to be
+  recognized.
+  We recommend to consistently indent the first level by one space.
+
+
+Numbered lists can be created like this:
+
+example:
+  ``````
+  1. first item
+  2. and another
+     a) subitem 1
+     b) subitem 2
+  3. last item
+  ``````
+  Each numbered item can be introduced by an optional open brace,
+  a number and an closing brace or symbol.
+  E.g. `(1)`, `b.`, `iii`, `[IV]`, and `<5>` are all valid number
+  schemes.
+
+
+Element content can be enclosed by marker lines.
+
+example:
+  `````
+  Verbatim code block:
+  ```
+  int main(int argc, char **argv) {
+      printf("Hello, world.");
+      return 0;
+  }
+  ```
+
+  `````
+
+Indentation can also be used to define an implicit code section.
+Any block indented with at least four spaces or one tab is taken as a "Code" element.
+Additional indentation is taken verbatim as indentation within the code block.
+
+example:
+  `````
+  Hello world program:
+      int main(int argc, char **argv) {
+          printf("Hello world.");
+          return 0;
+      }
+  `````
+  This is parsed identical to the previous example.
+
+
+Lines starting with `>` form block quotes.
+
+example:
+  `````
+  > Just like quoted lines in email,
+  > the text after the `>` quote characters
+  > is concatenated from following lines.
+  >> This is a blockquote within another.
+  `````
+
+
+
+Text markup
+~~~~~~~~~~~
+
+A span of text can be attributed:
+
+example:
+  `````
+  Text with [em:emphasis] or [strong:strong emphasis].
+  [style color=red: [em: red emphasis]]
+  `````
+
+The markup is always enclosed in a matching pair of brackets (`[]`),
+the text content comes after a colon (`:`), everything before the colon is used to attribute this text.
+
+
+Links
+-----
+
+example:
+  `````
+  Please visit our [link http://example.com/: Homepage].
+  A link to another part of the document [link #id] or to another document [link doc.gain].
+  Adding a link to some text: [link doc.gain: some text].
+  Link to a website (containing a colon in the URL): [link "http://www.example.com/"].
+  `````
+
+
+Images and figures
+------------------
+
+example:
+  `````
+  Inline image:
+  [image a.png]
+  [image a.png title="title": alternative text]
+  `````
+
+example:
+  `````
+  Figure: #fig1
+    [image fig1.png]
+    Description of the figure
+    # TBD: find better syntax?
+  `````
+
+Mathematics
+-----------
+
+example:
+  `````
+  Inline equation ([math: E = m c^2]) using TeX syntax or block mode:
+
+  Math:
+    a^2 + b^2 = c^2
+  `````
+
+
+Shortcuts
+---------
+
+There are several abbreviations:
+
+example:
+  `````
+  [[Name of section]]      instead of [link #id-of-section: Name of section]
+  http://b.c.de            instead of [link "http://b.c.de"]
+  a@b.c.de                 instead of [mailto:a@b.c.de]
+  `pre-formatted code`     instead of [code: pre-formatted code]
+  ~raw text, no markup~    instead of [raw: raw text, no markup]
+  *emphasize*              instead of [em: emphasize]
+  **strong empasize**      instead of [strong: strong emphasize]
+  $a^2 = b^2 + c^2$        instead of [math: a^2 = b^2 + c^2]
+  `````
+
+example:
+  `````
+  ```
+  pre-formatted code
+  ```
+
+  instead of
+
+  Pre:
+    pre-formatted code
+  `````
+
+
+These additional special characters are only interpreted when the
+opening and closing part are on the same line and when there is
+no whitespace after the opening and before the closing part.
+I.e. `The costs are $5 and $10.` will not trigger math mode.
+
+Literate brackets can be inserted by escaping them with [raw:~]:
+
+example:
+  `~[~` to get a ~[~.
+  `~]~` to get a ~]~.
+  `[raw:~]` to get a single [raw:~].
+  `*~**foo**~*` to get emphasis on a word with raw asterisks (*~**foo**~*).
+
+
+
+Inline HTML
+~~~~~~~~~~~
+
+An XML subtree can be embedded verbatim into the document.
+It has to start on a line of its own and has to end at the end of a line.
+
+Alternatively, `<span>` elements may be inserted directly into the text.
+
+
+Inline RDFa
+~~~~~~~~~~~
+
+TBD
+
+
+Tables
+~~~~~~
+
+TBD
+
+

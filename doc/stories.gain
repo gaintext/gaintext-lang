@@ -1,0 +1,70 @@
+
+story: Technical document
+=========================
+
+Write a technical document with included tables, diagrams, mathematical formulas.
+
+Allow to review everything in the plain text source code.
+
+Include common styles and glossary items / bibliography items from a shared source.
+
+
+story: Requirements document
+============================
+
+One document with chapters, containing multiple requirements.
+
+Each requirement may in turn be structured into multiple sections and contain links to other requirements or items.
+
+Such a document is rendered for reading by humans (HTML / PDF) as well as by machines (e.g. RDFa).
+The machine readable part may be used for some structural analysis (link consistency, whatever) which may
+then also be used to annotate the human readable part.
+
+
+story: Test specifications
+==========================
+
+One document with chapters, containing multiple test case specifications with links to requirements.
+
+Same human readable as well as machine readable output as for requirements.
+
+
+story: Traceable documents
+==========================
+
+TBD
+
+
+story: Documents as user interface
+==================================
+
+Even when documents are printed out and read, they always are a user interface, even though a rather static one.
+Information should be given to users in an efficient manner.
+
+Currently, static documents are created completely different to the dynamic user interfaces which are used to interact with a computer.
+However, many of the abstractions and concepts which were developed for GUI interfaces can also be applied to the creation of static documents.
+With HTML, there is even a format which is already suitable for both: CSS explicitly supports layout for print media and with PrinceXML,
+there is a high-quality renderer to create PDFs.
+
+Current state
+-------------
+
+Print documents are most often created with word processors, desktop publishing systems and content management systems.
+They have in common that they only concentrate on the text content and that there are predefined features for formatting.
+
+Graphic user interfaces are commonly created by general purpose programming languages, possibly by including some framework libraries.
+
+Both UI frameworks and print media focus on separating content and presentation.
+("Formatvorlagen", Latex modules, HTML5<->Javascript+CSS, Content<->Plugins in CMS).
+
+Actually HTML5+CSS is a quite good solution also for documents.
+It is very flexible and can be used to render high quality documents (cf. PrinceXML).
+It can also include embedded RDFa data to represent structured data.
+But it is not so easy to author these documents.
+Although it is not as low-level as PDF, it is still not meant to be consumed by mere mortals without some highly complex processing.
+So we still need a source language which can be used to generate HTML.
+
+
+
+
+
