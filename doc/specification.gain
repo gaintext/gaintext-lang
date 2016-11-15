@@ -10,7 +10,7 @@ chapter: GainText specification
 
 
 Document structure
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 Paragraphs
 ----------
@@ -35,7 +35,7 @@ example:
   `````
   This defines a new section of the document, with the given title.
 
-The name of an element may consists of several words.
+The name of an element may consist of several words.
 However, the name is not free but has to be defined by the used template.
 The first word of the name selects if and which additional information can be used within the element name.
 
@@ -58,6 +58,7 @@ Only previously defined element names (e.g. by a template) are recognized.
 All other names simply represent normal text.
 
 Elements are only recognized when they start a new block.
+TBD: and only allow elements in this block.
 
 example:
   `````
@@ -86,26 +87,19 @@ to conflict with the start of a text paragraph.
 Attributes
 ----------
 
-Elements may contain attributes:
+Elements may contain attributes.
+
+These can either be put next to the element name (before the colon)
+or within braces at the end of the line.
 
 example:
   `````
-  section: title of the section #id .class attr=value
+  section #id .class attr=value: title of the section
   `````
 
   `````
   section: title of the section {#id .class attr=value}
   `````
-
-  `````
-  section: "title of the section" #id .class attr=value
-  `````
-
-# This does not work, because it has a `#` at the beginning of the line:
-# `````
-# section: title of the section
-#   #id .class attr=value
-# `````
 
   this is an abbreviation for:
 
@@ -127,7 +121,7 @@ TBD:
   Element definitions could then generate attributes automatically, based on RDF properties.
 
   The *title* has to be handled by the element definition, too.
-  Simple elments may use it as the element content, while section-like elements will put it into its own `<title>` tag.
+  Simple elements may use it as the element content, while section-like elements will put it into its own `<title>` tag.
 
   Move down!
 
@@ -278,7 +272,7 @@ example:
 Shortcuts
 ---------
 
-Some commonly used element have shortcuts so that they can be created easier.
+Some commonly used elements have shortcuts so that they can be created easier.
 
 Lists can be introduced with the characters `*`, `+`, and `-`:
 
@@ -353,7 +347,12 @@ example:
   >> This is a blockquote within another.
   `````
 
+Lines starting with `//` are comments which will not be part of the document
 
+example:
+  `````
+  // comment, no markup will be parsed here
+  `````
 
 Text markup
 ~~~~~~~~~~~
@@ -379,6 +378,7 @@ example:
   A link to another part of the document [link #id] or to another document [link doc.gain].
   Adding a link to some text: [link doc.gain: some text].
   Link to a website (containing a colon in the URL): [link "http://www.example.com/"].
+  TBD: require colon + white-space to separate URL + Title?
   `````
 
 
@@ -387,14 +387,15 @@ Images and figures
 
 example:
   `````
-  Inline image:
+  inline image:
   [image a.png]
   [image a.png title="title": alternative text]
+  [image a.png: alternative text {title="title"}]
   `````
 
 example:
   `````
-  Figure: #fig1
+  figure #fig1:
     [image fig1.png]
     Description of the figure
     # TBD: find better syntax?
@@ -407,7 +408,7 @@ example:
   `````
   Inline equation ([math: E = m c^2]) using TeX syntax or block mode:
 
-  Math:
+  math:
     a^2 + b^2 = c^2
   `````
 
@@ -420,8 +421,10 @@ There are several abbreviations:
 example:
   `````
   [[Name of section]]      instead of [link #id-of-section: Name of section]
-  http://b.c.de            instead of [link "http://b.c.de"]
-  a@b.c.de                 instead of [mailto:a@b.c.de]
+  {{template-paramter}}    instead of [param: template-parameter]
+  {{dom-selector}}         instead of [select: dom-selector]
+  http://example.org/      instead of [link "http://exaple.org/"]
+  info@example.org         instead of [mailto:info@example.org]
   `pre-formatted code`     instead of [code: pre-formatted code]
   ~raw text, no markup~    instead of [raw: raw text, no markup]
   *emphasize*              instead of [em: emphasize]
@@ -437,24 +440,51 @@ example:
 
   instead of
 
-  Pre:
+  code:
     pre-formatted code
   `````
 
-
 These additional special characters are only interpreted when the
-opening and closing part are on the same line and when there is
-no whitespace after the opening and before the closing part.
-I.e. `The costs are $5 and $10.` will not trigger math mode.
-
-Literate brackets can be inserted by escaping them with [raw:~]:
+opening and closing part are on the same line and must start at the
+beginning of a word but must not end at the beginning of a word.
+That means that white-space is required in front of the opening part
+(the opening part can of course also be at the beginning of the line or
+some other element)
+but no white-space is allowed directly after it or before the closing part.
 
 example:
-  `~[~` to get a ~[~.
-  `~]~` to get a ~]~.
-  `[raw:~]` to get a single [raw:~].
+  `The costs are $5 and $10.` will not trigger math mode
+  (white-space before the second `$`).
+
+  `The balance is between -$10 and -$5.` will also not trigger math mode
+  (no white-space before the first `$`).
+
+  Neither does `The costs are ~10$.` trigger raw or math mode
+  (only one `~`/`$` on the line).
+
+Such elements can be nested.
+
+example:
   `*~**foo**~*` to get emphasis on a word with raw asterisks (*~**foo**~*).
 
+Literate brackets can be inserted by escaping them with [code:~] or `\\`.
+
+example:
+  `~[~` or `\[` to get a ~[~.
+  `~]~` or `\]` to get a ~]~.
+
+  `[raw:~]` or `\~` to get a single [raw:~].
+
+Escaping with `~` does not work inside a word
+(needs whitespace before the leading `~`).
+Either escape the whole word or use `\\`.
+
+example:
+
+  ```
+  ~[not an element]~
+  \[not an element]
+  ```
 
 
 Inline HTML
@@ -463,13 +493,31 @@ Inline HTML
 An XML subtree can be embedded verbatim into the document.
 It has to start on a line of its own and has to end at the end of a line.
 
-Alternatively, `<span>` elements may be inserted directly into the text.
+Alternatively, `<span>`, `<b>` and `<em>` elements may be inserted directly into the text.
 
 
 Inline RDFa
 ~~~~~~~~~~~
 
-TBD
+TBD: base on JSON-LD?
+
+example:
+  `````
+  @context person:
+    name:
+      @id: http://schema.org/name
+    image:
+      @id: http://schema.org/image
+      @type: @id
+    homepage:
+      @id: http://schema.org/url
+      @type: @id
+
+  person:
+    name: Anton
+    image: http://example.com/anton.jpg
+    homepage: http://example.com/anton.html
+  `````
 
 
 Tables
@@ -477,4 +525,142 @@ Tables
 
 TBD
 
+Maybe support different styles for different use cases:
 
+ - "visual style" which resembles a rendered table
+ - "adjacency matrix" style for one data item per line
+
+Visual style is difficult to parse when we want to support all blocks within the cells.
+
+Other styles may be difficult to remember/use for beginners.
+
+example:
+  A visual style, relying on layout alone.
+  Looks nice even in source but does not work with proportional fonts.
+  May be difficult to use in some text editors.
+  Can be parsed quite easily in a two-stage approach when the first stage just cuts out the cells at fixed positions.
+  `````
+  table:
+    first   second
+    -----   ------
+    a1      b1
+    a2      b2
+  `````
+
+  A visual style, relying on separator characters.
+  Can be layouted to look nice in source form, but can also be edited using proportional fonts.
+  Difficult to parse as the grammar has to understand both the cell separator as well as the contents of the cell at the same time.
+  (The separator character might be used and escaped by the cell content itself)
+  `````
+  table:
+    heading: first [] second
+    a1 [] b1
+    a2 [] b2
+  `````
+
+  A list style, each line as one list.
+  With row headings represented as element.
+  `````
+  table:
+   - first: a1
+     second: b1
+   - first: a2
+     second: b2
+  `````
+
+  Similar list style, but with shortcut elements for headings.
+  `````
+  table:
+   heading a: first
+   heading b: second
+   + a: a1
+     b: b1
+   + a: a2
+     b: b2
+  `````
+
+  `````
+  table:
+   - [first: a1 ][second: b1 ]
+   - [first: a2 ][second: b2 ]
+  `````
+
+  `````
+  table:
+    heading: first
+    heading: second
+    cell first 1: a1
+    cell B 1: b1
+    first: a2
+    second: b2
+  `````
+
+  `````
+  table:
+    row:
+     - a1
+     - b1
+    row:
+     - a2
+     - b2
+  `````
+
+  `````
+  table:
+    column: first
+     - a1
+     - a2
+    column: second
+     - b1
+     - b2
+  `````
+
+
+Web Component integration
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Web components should be easy to use in GainText documents.
+
+example:
+  `````
+  import: http://example.org/elements/ex-warning.html
+
+  ex-warning: severity=low
+    Don't do *this* at home!
+  `````
+
+Just like normal GainText elements, only previously registered elements
+are recognized.
+This means that all HTML imports have to be checked for Web Components.
+
+
+Macros
+~~~~~~
+
+Many template tasks can be solved by using web components.
+
+For simple tasks, a template can also be specified inside GainText.
+Use a templating mechanism to generate content.
+
+Select nodes in the AST using XPath or similar.
+
+Have some special elements which can be used to import or process these nodes
+
+Allow to define shortcuts which can be used to generate new content based on a template.
+
+example:
+  `````
+  person:
+    name: Anton
+    image: http://example.com/anton.jpg
+    homepage: http://example.com/anton.html
+
+  define avatar:
+    parameter name:
+    <a href="{{person[name={{name}}].homepage}}">
+      <img src="{{person[name={{name}}].image}}" alt="{{name}}"/>
+      {{name}}
+    </a>
+
+  [avatar: name=Anton]
+  `````
